@@ -1,0 +1,72 @@
+  <!doctype html>
+  <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+      <!-- Bootstrap 4 CSS -->
+      <link rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+            integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+            crossorigin="anonymous">
+
+      <title>{% block title %}Cartify{% endblock %}</title>
+
+      <!-- CSS Block: Child templates include <style> if needed -->
+      {% block css %}{% endblock %}
+    </head>
+
+    <body>
+
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+          <a class="navbar-brand" href="/shop">Cartify</a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+              <li class="nav-item active"><a class="nav-link" href="/shop">Home</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'tracker' %}">Tracker</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'contact' %}">Contact Us</a></li>
+              <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">About</a></li>
+            </ul>
+
+            <!-- Search form -->
+            <form class="form-inline ml-3" method="get" action="{% url 'search' %}">
+              <input class="form-control mr-sm-2" 
+                    type="search" 
+                    placeholder="Search products" 
+                    aria-label="Search" 
+                    name="q">
+              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </form>
+
+            <!-- Cart button -->
+            <a href="{% url 'checkout' %}" class="btn btn-secondary mx-2">
+            🛒 Cart (<span id="cart">{{ cart_count }}</span>)
+            </a>
+
+          </div>
+        </div>
+      </nav>
+
+      <!-- Page Body -->
+      <div class="container my-3">
+        {% block body %}{% endblock %}
+      </div>
+
+      <!-- Bootstrap 4 JS -->
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+              crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+              crossorigin="anonymous"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+              crossorigin="anonymous"></script>
+
+      <!-- JS Block -->
+      {% block js %}{% endblock %}
+    </body>
+  </html>

@@ -1,0 +1,85 @@
+{% extends 'shop/basic.html' %}
+{% load static %}
+
+{% block title %}Track Order - Cartify{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+  <h2 class="fw-bold mb-4">📦 Track Your Order</h2>
+
+  <div class="card shadow-sm p-4 mb-4">
+    <form id="trackerForm">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <input type="text" class="form-control" id="order_id" placeholder="Order ID" required>
+        </div>
+        <div class="col-md-6">
+          <input type="email" class="form-control" id="email" placeholder="Email" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">
+        Track Order
+      </button>
+    </form>
+  </div>
+
+  <div id="trackerResult"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  document.getElementById("trackerForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    let orderId = document.getElementById("order_id").value;
+    let email = document.getElementById("email").value;
+    let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch("{% url 'tracker' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrfToken
+        },
+        body: `order_id=${orderId}&email=${email}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        let resultDiv = document.getElementById("trackerResult");
+
+        if (data.status === "success") {
+            let itemsHtml = "";
+
+            data.items.forEach(item => {
+                itemsHtml += `
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>${item.name} × ${item.quantity}</span>
+                    <span>₹${item.price}</span>
+                </li>`;
+            });
+
+            resultDiv.innerHTML = `
+            <div class="card shadow-sm">
+              <div class="card-header fw-bold">Order Status</div>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><b>Order ID:</b> ${data.order_id}</li>
+                <li class="list-group-item"><b>Status:</b> ${data.status_desc}</li>
+                <li class="list-group-item"><b>Total:</b> ₹${data.amount}</li>
+              </ul>
+              <div class="card-body">
+                <h6 class="fw-bold">Items:</h6>
+                <ul class="list-group">${itemsHtml}</ul>
+              </div>
+            </div>`;
+        } else {
+            resultDiv.innerHTML = `
+            <div class="alert alert-danger mt-3">${data.message}</div>`;
+        }
+    });
+  });
+
+});
+</script>
+{% endblock %}

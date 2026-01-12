@@ -1,0 +1,327 @@
+{% extends 'shop/basic.html' %}
+
+{% block title %}Checkout - Cartify{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+
+  <h2 class="mb-4 fw-bold">🛒 Checkout</h2>
+
+  {% if items %}
+  <div class="row">
+
+    <!-- CART TABLE -->
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">
+          Your Cart
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle text-center mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Product</th>
+                <th>Price (₹)</th>
+                <th>Qty</th>
+                <th>Total (₹)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+              <tr id="row-{{ item.product.product_id }}">
+                <td class="fw-medium">{{ item.product.product_name }}</td>
+                <td>{{ item.product.price }}</td>
+                <td>{{ item.quantity }}</td>
+                <td class="fw-semibold">{{ item.subtotal }}</td>
+                <td>
+                  <button type="button"
+                          class="btn btn-outline-danger btn-sm remove-btn"
+                          data-id="{{ item.product.product_id }}">
+                    ✕
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER SUMMARY -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-4 sticky-top" style="top: 20px;">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Order Summary</h5>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Total</span>
+            <strong>₹ <span id="grand-total">{{ total }}</span></strong>
+          </div>
+          <hr>
+          <p class="text-muted small mb-0">
+            Shipping & taxes calculated at checkout
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ORDER SUCCESS POPUP -->
+  <div id="order-success-popup"
+       style="display:none; position:fixed; top:20%; left:50%; transform:translateX(-50%);
+              background:#28a745; color:white; padding:20px 40px;
+              border-radius:8px; z-index:1000; font-size:18px;">
+    🎉 Your order has been placed successfully!
+  </div>
+
+  <!-- SHIPPING FORM -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-header fw-semibold">
+      📦 Shipping Details
+    </div>
+    <div class="card-body">
+      <form id="checkout-form" method="post" action="/shop/checkout/">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" name="phone" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" name="city" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">State</label>
+            <input type="text" class="form-control" name="state" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Zip Code</label>
+            <input type="text" class="form-control" name="zip_code" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" rows="3" name="address" required></textarea>
+          </div>
+        </div>
+
+        <div class="text-end mt-4">
+          <button type="submit" id="place-order-btn" class="btn btn-success btn-lg px-5">
+            Place Order
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="alert alert-warning text-center py-4">
+    <h5>Your cart is empty 😕</h5>
+    <a href="/shop" class="btn btn-primary mt-3">Continue Shopping</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+
+{% block js %}
+<script>
+/* ======================= CSRF TOKEN ======================= */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+/* ======================= HOMEPAGE CART LOGIC ======================= */
+document.addEventListener('DOMContentLoaded', function () {
+    let cart = {}; // client-side qty tracker
+
+    /* ---------- Quantity Controls ---------- */
+    document.querySelectorAll('.increase').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            cart[id] = (cart[id] || 0) + 1;
+            updateQtyDisplay(id);
+        });
+    });
+
+    document.querySelectorAll('.decrease').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            if (cart[id] > 0) cart[id] -= 1;
+            updateQtyDisplay(id);
+
+            // hide controls if qty 0
+            if (cart[id] === 0) {
+                document.querySelector(`#qty-${id}`).parentElement.style.display = 'none';
+            }
+        });
+    });
+
+    /* ---------- Update Quantity Display ---------- */
+    function updateQtyDisplay(id) {
+        document.getElementById(`qty-${id}`).innerText = cart[id] || 0;
+        document.getElementById(`badge-${id}`).innerText = cart[id] || 0;
+    }
+
+    /* ---------- Add to Cart Button ---------- */
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+
+            if (!cart[id] || cart[id] === 0) cart[id] = 1;
+            updateQtyDisplay(id);
+
+            // show quantity controls
+            document.querySelector(`#qty-${id}`).parentElement.style.display = 'flex';
+
+            fetch("{% url 'add_to_cart' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({
+                    product_id: id,
+                    quantity: cart[id]
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('cart').innerText = data.cart_count;
+                }
+            })
+            .catch(err => console.error("Add to cart error:", err));
+        });
+    });
+
+    /* ---------- Buy Button ---------- */
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            const qty = cart[id] || 0;
+            if (qty === 0) return;
+
+            fetch("{% url 'add_to_cart' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ product_id: id, quantity: qty })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) window.location.href = "{% url 'checkout' %}";
+            })
+            .catch(err => console.error("Buy error:", err));
+        });
+    });
+
+    /* ======================= CHECKOUT PAGE LOGIC ======================= */
+
+    // Remove item from checkout cart
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const pid = this.dataset.id;
+            fetch("{% url 'remove_from_cart' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrftoken
+                },
+                body: JSON.stringify({ product_id: pid })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove table row
+                    const row = document.getElementById(`row-${pid}`);
+                    if (row) row.remove();
+
+                    // Update cart count
+                    const cartCount = document.getElementById("cart");
+                    if (cartCount) cartCount.innerText = data.cart_count;
+
+                    // Update total
+                    const totalSpan = document.getElementById("grand-total");
+                    if (totalSpan) totalSpan.innerText = data.total;
+
+                    // Disable order button if cart empty
+                    if (data.cart_count === 0) {
+                        const orderBtn = document.getElementById("place-order-btn");
+                        if (orderBtn) {
+                            orderBtn.disabled = true;
+                            orderBtn.innerText = "Cart is Empty";
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error("Remove from cart error:", err));
+        });
+    });
+
+    /* ---------- Checkout Form Submission ---------- */
+    const form = document.getElementById("checkout-form");
+    if (form) {
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            fetch("{% url 'checkout' %}", {
+                method: "POST",
+                body: new FormData(form),
+                headers: {
+                    "X-CSRFToken": csrftoken,
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.cart_empty) {
+                    alert("Your cart is empty. Please add items before ordering.");
+                    return;
+                }
+                if (data.success) showPopup();
+            })
+            .catch(err => console.error("Checkout error:", err));
+        });
+    }
+
+    /* ---------- Order Success Popup ---------- */
+    function showPopup() {
+        const popup = document.getElementById('order-success-popup');
+        if (!popup) return;
+
+        popup.style.display = 'block';
+        setTimeout(() => {
+            popup.style.display = 'none';
+            window.location.href = "{% url 'shop' %}";
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

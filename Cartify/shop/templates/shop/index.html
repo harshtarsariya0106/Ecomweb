@@ -1,0 +1,373 @@
+{% extends 'shop/basic.html' %}
+{% load static %}
+
+{% block title %}Home - Cartify{% endblock %}
+
+{% block css %}
+<style>
+/* Card image */
+.card-img-top {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Carousel padding */
+.carousel-item {
+    padding: 20px 90px ;
+}
+
+/* Card style */
+.card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.card-body {
+    text-align: center;
+}
+
+/* Quantity controls */
+.qty-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.qty-controls button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 5px;
+}
+
+.qty-controls span {
+    margin: 0 10px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Add to Cart button */
+.add-to-cart-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 10px 0;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-to-cart-btn:hover {
+    background-color: #0069d9;
+}
+
+/* Buy button */
+.buy-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 10px 0;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.buy-btn:hover {
+    background-color: #218838;
+}
+
+/* Cart badge */
+.cart-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 4px 7px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Carousel controls fix */
+.carousel-control-next,
+.carousel-control-prev {
+    position: absolute;
+    top: 50%;           
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 50px;        
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0,0,0,0.3); 
+    border-radius: 50%;
+    color: #fff;
+    text-align: center;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.carousel-control-next:hover,
+.carousel-control-prev:hover {
+    opacity: 1;
+    background-color: rgba(0,0,0,0.6);
+}
+
+/* Adjust icon size */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-size: 50% 50%;
+}
+
+/* Responsive adjustments */
+@media(max-width: 768px) {
+    .carousel-item .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media(max-width: 480px) {
+    .carousel-item .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+.qty-controls {
+    display: none;   /* hide initially */
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    {% for category, chunks in allprods %}
+    <h2 class="mb-3">{{ category }}</h2>
+
+    <div id="carousel{{ forloop.counter }}" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            {% for chunk in chunks %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="row">
+                    {% for prod in chunk %}
+                    <div class="col-md-3 mb-3 position-relative">
+                        <div class="card h-100">
+                            <a href="{% url 'productview' prod.product_id %}">
+                                <img src="{{ prod.image.url }}"
+                                    class="card-img-top"
+                                    alt="{{ prod.product_name }}">
+                            </a>
+
+                            <div class="card-body">
+                                <!-- Product details -->
+                                <h5 class="card-title">{{ prod.product_name }}</h5>
+                                <p class="card-text">{{ prod.description|truncatewords:15 }}</p>
+                                <p class="card-text"><strong>₹{{ prod.price }}</strong></p>
+
+                                <!-- Quantity controls -->
+                                <div class="qty-controls">
+                                    <button class="btn btn-sm btn-secondary decrease" data-id="{{ prod.product_id }}">-</button>
+                                    <span class="qty" id="qty-{{ prod.product_id }}">0</span>
+                                    <button class="btn btn-sm btn-primary increase" data-id="{{ prod.product_id }}">+</button>
+                                </div>
+
+                                <!-- Buttons -->
+                                <div class="d-grid gap-2">
+                                    <button class="add-to-cart-btn btn btn-primary"data-id="{{ prod.product_id }}">
+                                        Add to Cart
+                                    </button>
+                                    <button class="buy-btn" data-id="{{ prod.product_id }}">Buy</button>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="cart-badge" id="badge-{{ prod.product_id }}">0</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Carousel controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#carousel{{ forloop.counter }}" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carousel{{ forloop.counter }}" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+    </div>
+    {% endfor %}
+    <!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="qv-name"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <img id="qv-img" src="" class="img-fluid rounded">
+          </div>
+          <div class="col-md-6">
+            <h4 class="text-success">₹<span id="qv-price"></span></h4>
+            <p id="qv-desc"></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+/* 🔹 ADD THIS AT THE TOP */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+    
+
+document.addEventListener('DOMContentLoaded', function() {
+    let cart = {};
+
+    // Increase quantity
+    document.querySelectorAll('.increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            cart[id] = (cart[id] || 0) + 1;
+            updateQtyDisplay(id);
+        });
+    });
+    
+    // decrease quantity
+    document.querySelectorAll('.decrease').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+
+        if (cart[id] > 0) {
+            cart[id] -= 1;
+        }
+
+        updateQtyDisplay(id);
+
+        // hide qty controls if quantity is zero
+        if (cart[id] === 0) {
+            document.querySelector(`#qty-${id}`).parentElement.style.display = 'none';
+        }
+    });
+});
+
+
+    // Add to cart
+document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const id = this.dataset.id;
+
+        // if quantity is 0, set it to 1 on first click
+        if (!cart[id] || cart[id] === 0) {
+            cart[id] = 1;
+        }
+
+        updateQtyDisplay(id);
+
+        // SHOW qty controls
+        document.querySelector(`#qty-${id}`).parentElement.style.display = 'flex';
+
+        fetch("{% url 'add_to_cart' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                product_id: id,
+                quantity: cart[id]
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('cart').innerText = data.cart_count;
+            }
+        });
+    });
+});
+
+
+    // Buy button
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const qty = cart[id] || 0;
+            if (qty === 0) return;
+
+            fetch("{% url 'add_to_cart' %}", {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers:{
+        'Content-Type':'application/json',
+        'X-CSRFToken': csrftoken
+    },
+    body: JSON.stringify({
+        product_id: id,
+        quantity: qty
+    })
+})
+.then(res => res.json())
+.then(data => {
+    if(data.success){
+        window.location.href = "{% url 'checkout' %}";
+    }
+});
+
+        });
+    });
+
+    function updateQtyDisplay(id) {
+        document.getElementById(`qty-${id}`).innerText = cart[id] || 0;
+        document.getElementById(`badge-${id}`).innerText = cart[id] || 0;
+    }
+});
+
+</script>
+
+{% endblock %}
