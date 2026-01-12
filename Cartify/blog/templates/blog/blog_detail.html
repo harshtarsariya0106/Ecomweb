@@ -1,0 +1,81 @@
+{% extends 'shop/basic.html' %}
+
+{% block title %}{{ blog.title }} - Cartify{% endblock %}
+
+{% block body %}
+
+<style>
+/* Blog Detail Container */
+.blog-detail {
+    max-width: 900px;
+    margin: auto;
+}
+
+/* Blog Title */
+.blog-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+/* Meta Info */
+.blog-meta {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Blog Image */
+.blog-image {
+    max-height: 450px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* Blog Content */
+.blog-content {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #333;
+}
+
+/* Blog Content Headings */
+.blog-content h2,
+.blog-content h3 {
+    margin-top: 2rem;
+    font-weight: 600;
+}
+
+/* Back Button */
+.back-btn {
+    margin-top: 2.5rem;
+}
+</style>
+
+<div class="container my-5 blog-detail">
+
+    <h2 class="blog-title mb-2">{{ blog.title }}</h2>
+
+    <p class="blog-meta mb-4">
+        By <strong>{{ blog.author }}</strong> •
+        {{ blog.created_at|date:"F j, Y" }}
+    </p>
+
+    {% if blog.image %}
+    <img src="{{ blog.image.url }}"
+         class="img-fluid blog-image mb-4"
+         alt="{{ blog.title }}">
+    {% endif %}
+
+    <div class="blog-content">
+        {{ blog.content|linebreaks }}
+    </div>
+
+    <a href="{% url 'blog:blog_list' %}"
+       class="btn btn-outline-secondary back-btn">
+        ← Back to Blog
+    </a>
+
+</div>
+
+{% endblock %}

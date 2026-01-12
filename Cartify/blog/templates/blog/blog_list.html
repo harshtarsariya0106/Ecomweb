@@ -1,0 +1,81 @@
+{% extends 'shop/basic.html' %}
+
+{% block title %}Blog - Cartify{% endblock %}
+
+{% block body %}
+
+{% block css %}
+<style>
+/* Blog Card Styling */
+.blog-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Blog Image */
+.blog-img {
+    height: 200px;
+    object-fit: cover;
+}
+
+/* Card Body Layout */
+.blog-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Blog Text Limit */
+.blog-text {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3; /* Standard property for future compatibility */
+}
+
+/* Read More Button at Bottom */
+.read-more {
+    margin-top: auto;
+}
+</style>
+
+{% endblock %}
+
+<div class="container my-5">
+    <h2 class="fw-bold mb-4">📝 Our Blog</h2>
+
+    <div class="row">
+        {% for blog in blogs %}
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+            <div class="card blog-card shadow-sm">
+
+                {% if blog.image %}
+                <img src="{{ blog.image.url }}"
+                     class="card-img-top blog-img"
+                     alt="{{ blog.title }}">
+                {% endif %}
+
+                <div class="card-body">
+                    <h5 class="card-title">{{ blog.title }}</h5>
+
+                    <p class="card-text blog-text">
+                        {{ blog.content|truncatewords:25 }}
+                    </p>
+
+                    <a href="{% url 'blog:blog_detail' blog.slug %}"
+                       class="btn btn-outline-primary read-more">
+                        Read More →
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+        <p>No blogs available.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
