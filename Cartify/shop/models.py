@@ -1,5 +1,8 @@
 from django.db import models
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
 # Create your models here.
 class product(models.Model):
     product_id = models.AutoField(primary_key=True  )

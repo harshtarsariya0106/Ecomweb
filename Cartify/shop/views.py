@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 import razorpay
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 
 
 def index(request):
@@ -173,13 +174,30 @@ def remove_from_cart(request):
         return JsonResponse({'success': True})
 
 
+
 def search(request):
     query = request.GET.get('q')
-    results = []
+    results_by_category = {}
+
     if query:
-        results = product.objects.filter(product_name__icontains=query)
-    return render(request, 'shop/search_results.html', {'results': results, 'query': query})
-    #return render(request, 'shop/search.html')
+        # Search by product name OR category name
+        products = product.objects.filter(
+            Q(product_name__icontains=query) |
+            Q(category__icontains=query)
+        )
+
+        for p in products:
+            category_name = p.category if p.category else "Uncategorized"
+            if category_name not in results_by_category:
+                results_by_category[category_name] = []
+            results_by_category[category_name].append(p)
+
+    return render(request, 'shop/search_results.html', {
+        'results_by_category': results_by_category,
+        'query': query
+    })
+
+
 
 @csrf_protect
 def add_to_cart(request):

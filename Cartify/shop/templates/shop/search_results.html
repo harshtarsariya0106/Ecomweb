@@ -15,43 +15,41 @@
 
 {% block body %}
 <div class="container">
-
     <h3 class="my-4">Search Results for "{{ query }}"</h3>
 
-    {% if results %}
-    <div class="row">
-        {% for product in results %}
-        <div class="col-md-3 mb-4">
-            <div class="card h-100">
-                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.product_name }}">
-                <div class="card-body text-center">
-                    <h5 class="card-title">{{ product.product_name }}</h5>
-                    <p class="card-text small text-muted">{{ product.desc|truncatechars:80 }}</p>
+    {% if results_by_category %}
+        {% for category, products in results_by_category.items %}
+            <h4 class="mt-4">{{ category }}</h4>
+            <div class="row">
+                {% for product in products %}
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.product_name }}">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">{{ product.product_name }}</h5>
+                            <p class="card-text small text-muted">{{ product.desc|truncatechars:80 }}</p>
 
-                    <!-- Cart buttons -->
-                    <span id="divpr{{ product.product_id }}">
-                       <button id="pr{{ product.product_id }}" class="btn btn-primary btn-sm cart">
-                            Add To Cart
-                        </button>
-                    </span>
+                            <span id="divpr{{ product.product_id }}">
+                               <button id="pr{{ product.product_id }}" class="btn btn-primary btn-sm cart">
+                                    Add To Cart
+                                </button>
+                            </span>
 
-                    <!-- QuickView button -->
-                    <a href="{% url 'productview' product.product_id %}" class="btn btn-outline-primary btn-sm mt-1">
-                        QuickView
-                    </a>
-
+                            <a href="{% url 'productview' product.product_id %}" class="btn btn-outline-primary btn-sm mt-1">
+                                QuickView
+                            </a>
+                        </div>
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-        </div>
         {% endfor %}
-    </div>
     {% else %}
         <p>No products found for your search.</p>
     {% endif %}
-
 </div>
 {% endblock %}
 
 {% block js %}
-<!-- You can include the same cart JS as in index.html if needed -->
+<!-- Cart JS if needed -->
 {% endblock %}
