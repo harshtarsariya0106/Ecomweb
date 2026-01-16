@@ -5,6 +5,11 @@ from math import ceil
 import json
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
+import razorpay
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+
+
 def index(request):
     allprods = []
     cats = product.objects.values_list('category', flat=True).distinct()
@@ -88,6 +93,11 @@ def productview(request, id):
     return render(request,'shop/prodviews.html', {'product': prod})
 
 
+
+client = razorpay.Client(
+    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+)
+
 def checkout(request):
     cart = request.session.get('cart', {})
     items = []
@@ -98,46 +108,69 @@ def checkout(request):
             prod = product.objects.get(product_name=name)
             subtotal = prod.price * qty
             total += subtotal
-            items.append({'product': prod, 'quantity': qty, 'subtotal': subtotal})
+
+            items.append({
+                'product': prod,
+                'quantity': qty,
+                'subtotal': subtotal
+            })
         except product.DoesNotExist:
             continue
 
-    if request.method == "POST":
-        if not cart:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'cart_empty': True})
-            return redirect('shop')
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
 
-        # GET FORM DATA
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        zip_code = request.POST.get('zip_code')
-        address = request.POST.get('address')
+        amount_paise = total * 100
+
+        razorpay_order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "payment_capture": 1
+        })
 
         Orders.objects.create(
-            name=name,
-            email=email,
-            phone=phone,
-            city=city,
-            state=state,
-            zip_code=zip_code,
-            address=address,
+            name=request.POST.get('name'),
+            email=request.POST.get('email'),
+            phone=request.POST.get('phone'),
+            city=request.POST.get('city'),
+            state=request.POST.get('state'),
+            zip_code=request.POST.get('zip_code'),
+            address=request.POST.get('address'),
             items_json=json.dumps(cart),
-            amount=total
+            amount=total,
+            razorpay_order_id=razorpay_order["id"]
         )
 
-        request.session['cart'] = {}
-        request.session.modified = True
+        return JsonResponse({
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "razorpay_order_id": razorpay_order["id"],
+            "amount": amount_paise
+        })
 
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'success': True})
+    return render(request, "shop/checkout.html", {
+        'items': items,
+        'total': total
+    })
 
-        return redirect('shop')
 
-    return render(request, 'shop/checkout.html', {'items': items, 'total': total})
+def remove_from_cart(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        pid = data.get("product_id")
+
+        cart = request.session.get("cart", {})
+
+        try:
+            prod = product.objects.get(product_id=pid)
+            item_name = prod.product_name
+        except product.DoesNotExist:
+            return JsonResponse({'success': False})
+
+        if item_name in cart:
+            del cart[item_name]
+            request.session['cart'] = cart
+            request.session.modified = True
+
+        return JsonResponse({'success': True})
 
 
 def search(request):
@@ -234,3 +267,23 @@ def remove_from_cart(request):
         'cart_count': sum(cart.values()),
         'total': total
     })
+
+@csrf_exempt
+def payment_success(request):
+    if request.method == "POST":
+        order_id = request.POST.get('order_id')
+        payment_id = request.POST.get('razorpay_payment_id')
+        razorpay_order_id = request.POST.get('razorpay_order_id')
+
+        order = Orders.objects.get(id=order_id)
+        order.payment_status = "Paid"
+        order.razorpay_payment_id = payment_id
+        order.save()
+
+        return JsonResponse({'status': 'success'})
+    
+def clear_cart(request):
+    if request.method == "POST":
+        request.session['cart'] = {}
+        request.session.modified = True
+        return JsonResponse({"success": True})

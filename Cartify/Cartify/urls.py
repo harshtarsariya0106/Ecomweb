@@ -24,6 +24,6 @@ from shop.views import index
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('shop/', include('shop.urls')), 
-    path('blog/', include('blog.urls')),
+    path('blog/', include('blog.urls', namespace='blog')),
     path('', index)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

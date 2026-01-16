@@ -26,7 +26,19 @@ SECRET_KEY = 'django-insecure-bo_t(dj$pu)bzda85_p%*$%ho%pv@s)4j2d254z69ez=&m0wie
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1', 
+    'localhost', 
+    'mya-aboveground-alishia.ngrok-free.dev'
+]
+CSRF_TRUSTED_ORIGINS = [
+    'https://mya-aboveground-alishia.ngrok-free.dev'    
+]
+
+# settings.py
+RAZORPAY_KEY_ID = "rzp_test_S4SM63l3fySizN"      # your test key id
+RAZORPAY_KEY_SECRET = "bGQdzZB6h0JccNJSaj1QGVW5"        # your test key secret
+
 
 
 # Application definition

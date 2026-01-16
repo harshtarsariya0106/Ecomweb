@@ -37,6 +37,10 @@ class Orders(models.Model):
     zip_code = models.CharField(max_length=10)
     phone = models.CharField(max_length=15)
     amount = models.IntegerField(default=0)
+    payment_status = models.CharField(max_length=20, default='Pending')
+    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+
 
     def __str__(self):
         return str(self.order_id) 
