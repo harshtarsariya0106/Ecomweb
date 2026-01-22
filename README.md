@@ -4,7 +4,7 @@ Follow the steps below to run the project locally.
 
 ###  1. Clone the Repository
 
-git clone https://github.com/harshtarsariya0106/cartify.git
+git clone https://github.com/harshtarsariya0106/Ecomweb.git
 
 ### 2. Navigate to the Project Folder
 
