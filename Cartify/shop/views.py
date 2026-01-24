@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from .models import product, Contact, Orders
+from .models import product, Contact, Orders, Category
 from math import ceil   
 import json
 from django.views.decorators.csrf import csrf_protect
@@ -13,10 +13,12 @@ from django.db.models import Q
 
 def index(request):
     allprods = []
-    cats = product.objects.values_list('category', flat=True).distinct()
+    cats = Category.objects.all()
 
     for cat in cats:
         prods = product.objects.filter(category=cat)
+        if not prods.exists():
+            continue
         nSlides = ceil(len(prods) / 4)
         chunks = [prods[i*4:(i+1)*4] for i in range(nSlides)]
         allprods.append([cat, chunks])
@@ -153,27 +155,6 @@ def checkout(request):
     })
 
 
-def remove_from_cart(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        pid = data.get("product_id")
-
-        cart = request.session.get("cart", {})
-
-        try:
-            prod = product.objects.get(product_id=pid)
-            item_name = prod.product_name
-        except product.DoesNotExist:
-            return JsonResponse({'success': False})
-
-        if item_name in cart:
-            del cart[item_name]
-            request.session['cart'] = cart
-            request.session.modified = True
-
-        return JsonResponse({'success': True})
-
-
 
 def search(request):
     query = request.GET.get('q')
@@ -183,11 +164,11 @@ def search(request):
         # Search by product name OR category name
         products = product.objects.filter(
             Q(product_name__icontains=query) |
-            Q(category__icontains=query)
+            Q(category__name__icontains=query)
         )
 
         for p in products:
-            category_name = p.category if p.category else "Uncategorized"
+            category_name = p.category.name if p.category else "Uncategorized"
             if category_name not in results_by_category:
                 results_by_category[category_name] = []
             results_by_category[category_name].append(p)

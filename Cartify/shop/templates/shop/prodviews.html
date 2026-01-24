@@ -1,72 +1,112 @@
 {% extends 'shop/basic.html' %}
 
 {% block body %}
-<div class="container mt-4">   
+<div class="container mt-4">
     <div class="row">
-    <div class="col-md-4">
-        <div class="row">
+        <div class="col-md-4">
             <h2>{{ product.product_name }}</h2>
             <img src="{{ product.image.url }}" width="300">
+
+            <div class="mt-3 d-flex align-items-center gap-2">
+                <button class="btn btn-success buy-now" data-id="{{ product.product_id }}">
+                    Buy Now
+                </button>
+
+                <div class="qty-controls" style="display:none;">
+                    <button class="btn btn-outline-secondary decrease" data-id="{{ product.product_id }}">-</button>
+                    <span id="qty-{{ product.product_id }}">1</span>
+                    <button class="btn btn-outline-secondary increase" data-id="{{ product.product_id }}">+</button>
+                </div>
+
+
+
+                <button class="btn btn-primary add-to-cart" data-id="{{ product.product_id }}">
+                    Add To Cart
+                </button>
+            </div>
         </div>
-        <div class="row">
-            <button class="btn btn-primary mx-3">Buy Now</button>
-            <button class="btn btn-primary">Add To Cart</button>
+
+        <div class="col-md-8">
+            <h5>{{ product.product_name }}</h5>
+            <p>{{ product.desc }}</p>
+            <h4>Price: ₹{{ product.price }}</h4>
         </div>
-    </div>
-    <div class="col-md-8">
-        <h5>{{product.product_name}}</h5>
-        <p>{{ product.desc }}</p>
-        <h4>Price: ₹{{ product.price }}</h4>
     </div>
 </div>
 {% endblock %}
 
-
 {% block js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function(){
-
+    const csrftoken = '{{ csrf_token }}';
     let cart = {};
+    const productId = "{{ product.product_id }}";
 
-    // Load cart
-    if(localStorage.getItem('cart')){
-        cart = JSON.parse(localStorage.getItem('cart'));
-        updateCartCount();
-    }
+    // Initialize quantity
+    let qty = 1;
+    $('#qty-' + productId).text(qty);
 
-    // Add to cart
-    $(document).on('click', '.cart', function(){
-
-        let id = this.id;
-        cart[id] = (cart[id] || 0) + 1;
-
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
+    // Increase quantity
+    $('.increase').click(function(){
+        qty += 1;
+        $('#qty-' + productId).text(qty);
     });
 
-    // TOTAL ITEMS COUNT
-    function updateCartCount(){
-        let total = 0;
-        for(let item in cart){
-            total += cart[item];
+    // Decrease quantity
+    $('.decrease').click(function(){
+        if(qty > 1){
+            qty -= 1;
+            $('#qty-' + productId).text(qty);
         }
-        $('#cart').text(total);
-    }
-   
-    function updatePopover(){
-        let text = '<h6>Cart Items</h6>';
-        for(let item in cart){
-            text += item + ' Qty: ' + cart[item] + '<br>';
+    });
+
+    // Add to Cart
+    $('.add-to-cart').click(function(){
+        // Show quantity controls when first clicked
+        $('.qty-controls').show();
+
+        $.ajax({
+            url: "{% url 'add_to_cart' %}",
+            method: "POST",
+            headers: {"X-CSRFToken": csrftoken},
+            data: JSON.stringify({
+                product_id: productId,
+                quantity: qty
+            }),
+            contentType: "application/json",
+            success: function(data){
+                if(data.success){
+                    $('#cart').text(data.cart_count);
+                    alert("Item added to cart ✅");
+                }
+            }
+        });
+    });
+
+    // Buy Now
+    $('.buy-now').click(function(){
+        // If quantity buttons hidden, assume qty = 1
+        if (!$('.qty-controls').is(':visible')) {
+            qty = 1;
         }
-        $('#popcart').attr('data-content', text).popover('show');
-    }
 
-    // INITIALIZE POPOVER
-    $('#popcart').popover();
-
-    document.getElementById("popcart").setAttribute('data-content','<h5>Cart</h5>')
+        $.ajax({
+            url: "{% url 'add_to_cart' %}",
+            method: "POST",
+            headers: {"X-CSRFToken": csrftoken},
+            data: JSON.stringify({
+                product_id: productId,
+                quantity: qty
+            }),
+            contentType: "application/json",
+            success: function(data){
+                // redirect to checkout page
+                window.location.href = "{% url 'checkout' %}";
+            }
+        });
+    });
 });
+
 </script>
-
-
 {% endblock %}

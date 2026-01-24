@@ -68,6 +68,51 @@
               crossorigin="anonymous"></script>
 
       <!-- JS Block -->
-      {% block js %}{% endblock %}
+      {% block js %}
+      <script>
+      document.addEventListener("DOMContentLoaded", function () {
+
+          let cart = {};
+
+          // LOAD CART FROM LOCAL STORAGE
+          if (localStorage.getItem("cart")) {
+              cart = JSON.parse(localStorage.getItem("cart"));
+              updateCartCount();
+          }
+
+          // GLOBAL ADD TO CART HANDLER
+          document.body.addEventListener("click", function (e) {
+
+              if (e.target.classList.contains("add-to-cart")) {
+
+                  let productId = e.target.dataset.id;
+
+                  if (cart[productId]) {
+                      cart[productId] += 1;
+                  } else {
+                      cart[productId] = 1;
+                  }
+
+                  localStorage.setItem("cart", JSON.stringify(cart));
+                  updateCartCount();
+              }
+          });
+
+          function updateCartCount() {
+              let total = 0;
+              for (let id in cart) {
+                  total += cart[id];
+              }
+
+              let cartCount = document.getElementById("cart-count");
+              if (cartCount) {
+                  cartCount.innerText = total;
+              }
+          }
+
+      });
+      </script>
+
+      {% endblock %}
     </body>
   </html>
