@@ -20,7 +20,11 @@ def index(request):
         if not prods.exists():
             continue
         nSlides = ceil(len(prods) / 4)
-        chunks = [prods[i*4:(i+1)*4] for i in range(nSlides)]
+        chunks = []
+        for i in range(nSlides):
+            start = i * 4
+            end = start + 4
+            chunks.append(prods[start:end])
         allprods.append([cat, chunks])
 
     cart = request.session.get('cart', {})
