@@ -14,42 +14,94 @@
 {% endblock %}
 
 {% block body %}
+<input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
 <div class="container">
     <h3 class="my-4">Search Results for "{{ query }}"</h3>
 
     {% if results_by_category %}
         {% for category, products in results_by_category.items %}
             <h4 class="mt-4">{{ category }}</h4>
+
             <div class="row">
                 {% for product in products %}
                 <div class="col-md-3 mb-4">
+
                     <div class="card h-100">
-                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.product_name }}">
+
+                        <img src="{{ product.image.url }}"
+                             class="card-img-top"
+                             alt="{{ product.product_name }}">
+
                         <div class="card-body text-center">
-                            <h5 class="card-title">{{ product.product_name }}</h5>
-                            <p class="card-text small text-muted">{{ product.desc|truncatechars:80 }}</p>
+
+                            <h5>{{ product.product_name }}</h5>
+
+                            <p class="small text-muted">
+                                {{ product.desc|truncatechars:80 }}
+                            </p>
 
                             <span id="divpr{{ product.product_id }}">
-                               <button id="pr{{ product.product_id }}" class="btn btn-primary btn-sm cart">
+                                <button id="pr{{ product.product_id }}"
+                                        class="btn btn-primary btn-sm cart">
                                     Add To Cart
                                 </button>
                             </span>
 
-                            <a href="{% url 'productview' product.product_id %}" class="btn btn-outline-primary btn-sm mt-1">
+                            <a href="{% url 'productview' product.product_id %}"
+                               class="btn btn-outline-primary btn-sm mt-1">
                                 QuickView
                             </a>
+
                         </div>
                     </div>
+
                 </div>
                 {% endfor %}
             </div>
+
         {% endfor %}
     {% else %}
-        <p>No products found for your search.</p>
+        <p>No products found.</p>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block js %}
-<!-- Cart JS if needed -->
+<script>
+$(document).on('click', '.cart', function () {
+
+    let idstr = this.id;        // pr12
+    let productId = idstr.slice(2);
+
+    let csrftoken = document.getElementById("csrf_token").value;
+
+    fetch("{% url 'add_to_cart' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: 1
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.success) {
+            $('#cart').text(data.cart_count);
+            alert("Added to cart ✅");
+        } else {
+            alert("Failed to add item ❌");
+        }
+
+    })
+    .catch(err => {
+        console.log("ERROR:", err);
+    });
+
+});
+</script>
 {% endblock %}
