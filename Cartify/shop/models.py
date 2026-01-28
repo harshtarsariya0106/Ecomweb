@@ -34,7 +34,7 @@ class Contact(models.Model):
 
 class Orders(models.Model):
     order_id = models.AutoField(primary_key=True)
-    items_json = models.TextField()
+    items_json = models.JSONField()
     name = models.CharField(max_length=100)
     email = models.EmailField()
     address = models.CharField(max_length=200)

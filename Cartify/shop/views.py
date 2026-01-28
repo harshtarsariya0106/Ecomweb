@@ -19,7 +19,7 @@ def index(request):
         prods = product.objects.filter(category=cat)
         if not prods.exists():
             continue
-        nSlides = ceil(len(prods) / 4)
+        nSlides = ceil(prods.count() / 4)
         chunks = []
         for i in range(nSlides):
             start = i * 4
@@ -63,12 +63,15 @@ def tracker(request):
 
             items = []
 
-            # 🔥 IMPORTANT CHANGE: key = product_name
+            # IMPORTANT CHANGE: key = product_name
             for product_name, qty in cart.items():
                 try:
                     prod = product.objects.get(product_name=product_name)
 
-                    quantity = qty[0] if isinstance(qty, list) else qty
+                    if isinstance(qty, list):
+                        quantity = qty[0]
+                    else:
+                        quantity = qty
 
                     items.append({
                         "name": prod.product_name,
@@ -93,7 +96,7 @@ def tracker(request):
                 "message": "Order not found"
             })
 
-    return render(request, "shop/tracker.html")
+    return render(request, "shop/tracker.html") 
 
 def productview(request, id):
     prod = product.objects.get(product_id=id)
@@ -159,7 +162,6 @@ def checkout(request):
     })
 
 
-
 def search(request):
     query = request.GET.get('q')
     results_by_category = {}
@@ -168,13 +170,18 @@ def search(request):
         # Search by product name OR category name
         products = product.objects.filter(
             Q(product_name__icontains=query) |
-            Q(category__name__icontains=query)
+            Q(category__name__icontains=query)  
         )
 
         for p in products:
-            category_name = p.category.name if p.category else "Uncategorized"
+            if p.category:
+                category_name = p.category.name
+            else:
+                category_name = "Uncategorized"
+
             if category_name not in results_by_category:
                 results_by_category[category_name] = []
+
             results_by_category[category_name].append(p)
 
     return render(request, 'shop/search_results.html', {
@@ -191,21 +198,21 @@ def add_to_cart(request):
         product_id = str(data.get('product_id', '')).strip()
         quantity = int(data.get('quantity', 0))
 
-        # ❌ BLOCK INVALID DATA
+        # BLOCK INVALID DATA
         if not product_id.isdigit() or quantity <= 0:
             return JsonResponse({'success': False})
 
-        # 🔹 GET PRODUCT NAME
+        # GET PRODUCT NAME
         try:
             prod = product.objects.get(product_id=int(product_id))
             item_name = prod.product_name
         except product.DoesNotExist:
             return JsonResponse({'success': False})
 
-        # 🔹 GET CART FROM SESSION
+        # GET CART FROM SESSION
         cart = request.session.get('cart', {})
 
-        # ✅ STORE BY ITEM NAME INSTEAD OF ID
+        # STORE BY ITEM NAME INSTEAD OF ID
         cart[item_name] = cart.get(item_name, 0) + quantity
         request.session['cart'] = cart
         request.session.modified = True
@@ -217,27 +224,6 @@ def add_to_cart(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
-
-def home(request):
-    allprods = []
-    catprods = product.objects.values('category', 'product_id')
-
-    cats = {item['category'] for item in catprods}
-
-    for cat in cats:
-        prod = product.objects.filter(category=cat)
-        n = len(prod)
-        nSlides = ceil(n / 4)
-        chunks = [prod[i:i+4] for i in range(0, n, 4)]
-        allprods.append([cat, chunks])
-
-    cart = request.session.get('cart', {})
-    cart_count = sum(cart.values())
-
-    return render(request, 'shop/index.html', {
-        'allprods': allprods,
-        'cart_count': cart_count
-    })
 
 @require_POST
 def remove_from_cart(request):
