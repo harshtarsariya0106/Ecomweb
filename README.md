@@ -1,43 +1,122 @@
-## Installation & Setup
+# 🛒 EcomWeb (Cartify)
 
-Follow the steps below to run the project locally.
+Follow the steps below to run this project locally on your system.
 
-###  1. Clone the Repository
+---
 
+## 📥 1. Clone the Repository
+
+```bash
 git clone https://github.com/harshtarsariya0106/Ecomweb.git
+```
 
-### 2. Navigate to the Project Folder
+---
 
-cd cartify
+## 📂 2. Navigate to the Project Folder
 
-### 3. Create and Activate a Virtual Environment
+```bash
+cd Ecomweb/Cartify
+```
 
+---
+
+## 🧪 3. Create and Activate Virtual Environment
+
+```bash
 python -m venv env
-### On Windows
+```
+
+### ▶️ Activate Environment
+
+**Windows:**
+
+```bash
 env\Scripts\activate
-### On Mac/Linux
+```
+
+**Mac/Linux:**
+
+```bash
 source env/bin/activate
+```
 
-### 4️. Install Dependencies
+---
 
+## 📦 4. Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-### 5️. Apply Database Migrations
+> ⚠️ If `requirements.txt` is not available, install manually:
 
+```bash
+pip install django pillow razorpay
+```
+
+---
+
+## 🗄️ 5. Apply Database Migrations
+
+```bash
 python manage.py migrate
+```
 
-### 6️. Create a Superuser (for Admin Access)
+---
 
+## 👤 6. Create Superuser (Admin Access)
+
+```bash
 python manage.py createsuperuser
+```
 
--> Enter a username, email, and password<br>
--> This lets you log into Django Admin
+* Enter username, email, and password
+* Use this to log in to admin panel
 
-### 7. Run the Development Server
+---
 
+## ▶️ 7. Run Development Server
+
+```bash
 python manage.py runserver
+```
 
-### 8️. Open in Browser
+---
 
-Go to:
+## 🌐 8. Open in Browser
+
+Main site:
+
+```
 http://127.0.0.1:8000/
+```
+
+Admin panel:
+
+```
+http://127.0.0.1:8000/admin/
+```
+
+---
+
+## ⚠️ Common Issues
+
+* **ModuleNotFoundError (django / razorpay / pillow)**
+  👉 Install missing package:
+
+```bash
+pip install package_name
+```
+
+* **Images not loading**
+  👉 Check `MEDIA_URL` and `MEDIA_ROOT` in settings
+
+---
+
+## 💡 Recommended
+
+Create `requirements.txt`:
+
+```bash
+pip freeze > requirements.txt
+```
